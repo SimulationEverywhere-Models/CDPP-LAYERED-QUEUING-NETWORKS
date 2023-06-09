@@ -1,0 +1,1577 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML EXPERIMENTAL 970324//EN">
+<HTML>
+<HEAD>
+<META NAME="GENERATOR" CONTENT="Adobe FrameMaker 5.5/HTML Export Filter">
+<LINK REL="STYLESHEET" HREF="devslqn.css">
+<TITLE> Overview</TITLE></HEAD>
+<BODY BGCOLOR="#ffffff">
+<OL>
+<LI CLASS="Chapter-Heading-(non-numbered)">
+<A NAME="pgfId=1049561">
+ </A>
+DEVS Library for Layered Queueing Networks</LI>
+<LI CLASS="Chapter-Heading-(non-numbered)">
+<A NAME="pgfId=1049563">
+ </A>
+by Dorin Petriu (dorin@sce.carleton.ca)</LI>
+</OL>
+<DIV>
+<H2 CLASS="HeadingRunIn">
+<A NAME="pgfId=1045626">
+ </A>
+Overview</H2>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1045706">
+ </A>
+This report covers the implementation of a DEVS library for the simulation of Layered Queueing Networks. <A HREF="devslqn.html#29194" CLASS="XRef">
+See Layered Queueing Networks</A>
+ provides an overview of Layered Queueing Networks. <A HREF="devslqn.html#10671" CLASS="XRef">
+See LQN Simulation Library for DEVS</A>
+ describes the design, implementation and testing of the DEVS library. Finally, <A HREF="devslqn.html#20516" CLASS="XRef">
+See Conclusions</A>
+ concludes the report.</LI>
+</OL>
+</DIV>
+<DIV>
+<H2 CLASS="Heading1">
+<A NAME="pgfId=1052264">
+ </A>
+<A NAME="29194">
+ </A>
+Layered Queueing Networks</H2>
+<DIV>
+<H3 CLASS="Heading2">
+<A NAME="pgfId=1046067">
+ </A>
+Background</H3>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1046081">
+ </A>
+Queueing Networks are based on a customer-server paradigm. Customers make service requests of the servers and these request are queued at the server until they can be serviced. Traditional Queueing Networks model only a single layer of customer-server relationships. Layered Queueing Networks (LQN) allow for of an arbitrary number of client-server levels <A HREF="devslqn.html#34848" CLASS="XRef">
+See J. A. Rolia, K. C. Sevcik, &quot;The Method of Layers&quot;, IEEE Transactions on Software Engineering, Vol. 21, No. 8, 1995, pp. 682-688</A>
+<A HREF="devslqn.html#33304" CLASS="XRef">
+See C. M. Woodside, &quot;Throughput Calculation for Basic Stochastic Rendezvous Networks&quot;, Performance Evaluation, Vol. 9, No. 2, Apr 1988, pp. 143-160</A>
+. LQNs can thus model intermediate software servers and be used to detect software deadlocks and software as well as hardware performance bottlenecks <A HREF="devslqn.html#40149" CLASS="XRef">
+See J.E. Neilson, C.M. Woodside, D.C. Petriu and S. Majumdar, &quot;Software Bottlenecking in Client-Server Systems and Rendez-vous Networks&quot;, IEEE Trans. On Software Engineering, Vol. 21, No. 9, pp. 776-782, September 1995</A>
+. The layered aspect of LQNs makes them very suitable for evaluating the performance of distributed systems <A HREF="devslqn.html#26606" CLASS="XRef">
+See C. M. Woodside, J. E. Neilson, D. C. Petriu and S. Majumdar, &quot;The Stochastic Rendezvous Network Model for Performance of Synchronous Client-Server-Like Distributed Software&quot;, IEEE Transactions on Computers, Vol. 44, No. 1, Jan 1995, pp. 20-34</A>
+<A HREF="devslqn.html#30683" CLASS="XRef">
+See C. M. Woodside, S. Majumdar, J. E. Neilson, D. C. Petriu, J. A. Rolia, A. Hubbard and R. B. Franks, &quot;A Guide to Performance Modeling of Distributed Client-Server Software Systems with Layered Queueing Networks&quot;, Department of Systems and Computer Engineering, Carleton University, Ottawa, Canada, Nov 1995</A>
+. For a tutorial on LQN please refer to <A HREF="devslqn.html#30029" CLASS="XRef">
+See Woodside C.M. (2002) Tutorial Introduction to Layered Performance Modeling of Software Performance. http://www.sce.carleton.ca/rads/lqn/lqn-documentation/tutorialf.pdf, May 2002.</A>
+.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1046083">
+ </A>
+LQNs model both software and hardware resources. The basic software resource is a task which runs in the context of a hardware processor. A task is any software object that has its own thread of execution. Tasks have entries which act as service access points. Entries can also be decomposed into phases that divide the workload into a first phase that is executed prior to sending a reply and a second phase that is executed after sending a reply or activities which are operations connected in sequence or in parallel.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1049828">
+ </A>
+Service calls can be made from entries in one task to entries in other tasks. LQNs support three types of calls: asynchronous (non-blocking), synchronous (blocking), and forwarding (a chain of calls where only the original caller blocks). <A HREF="devslqn.html#33368" CLASS="XRef">
+See Time semantics of LQN asynchronous, synchronous, and forwarding calls.</A>
+ shows the time semantics of these different types of calls.    </LI>
+</OL>
+<DIV>
+<MAP NAME="devslqn-1">
+</MAP>
+<IMG SRC="devslqn-1.gif" USEMAP="#devslqn-1">
+</DIV>
+</DIV>
+<DIV>
+<H3 CLASS="Heading2">
+<A NAME="pgfId=1046250">
+ </A>
+Solving</H3>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1046256">
+ </A>
+LQNs can be solved either using either the Layered Queueing Network Solver (LQNS) or the Layered Queueing Simulator (LQSim).</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1046291">
+ </A>
+LQNS is an analytic solver developed at Carleton University by Greg Franks as part of his Ph.D. research <A HREF="devslqn.html#32721" CLASS="XRef">
+See Greg Franks, &quot;Performance Analysis of Distributed Server Systems&quot;, Report OCIEE-00-01, Ph.D. thesis, Carleton University, Ottawa, Jan. 2000</A>
+. LQNS breaks the LQN layers down into separate queueing network sub-models. The individual queueing networks can be solved analytically using mean value analysis (MVA). The MVA results for each sub-model are then used to the parameters for the other sub-models it is connected to and the MVA is performed anew. This process is repeated either for a maximum number of iterations or until the results converge on a convergence value specified by the user.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1046267">
+ </A>
+LQSim uses the ParaSol simulation environment. ParaSol can simulate multithreaded systems that support transactions and provides built-in statistics for monitoring simulation objects <A HREF="devslqn.html#26381" CLASS="XRef">
+See E. Mascarenhas, &quot;A System for Multithreaded Parallel Simulation and Computation with Migrant Threads and Objects&quot;, Ph.D. Thesis, Department of Computer Sciences, Purdue University, West Lafayette, USA, 1996</A>
+<A HREF="devslqn.html#27698" CLASS="XRef">
+See E. Mascarenhas, F. Knop, and V. Rego, &quot;ParaSol: A Multithreaded System for Parallel Simulation Based on Mobile Threads&quot;, Winter Simulation Conference, 1995</A>
+. LQNs are simulated by creating tokens for each call and following those tokens through the system. The performance metrics are arrived at by recording the wait times and other statistics for each token. LQSim requires large number of runs in order to gather statistically meaningful data. This makes LQSim appreciably slower than LQNS and requires long simulations in order to generate accurate results.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1046373">
+ </A>
+Both LQNS and LQSim generate results that show entry average service times, average waiting time, throughput, and utilization, as well as processor throughput and utilization. </LI>
+<TABLE BORDER="1">
+<CAPTION>
+<H6 CLASS="TableTitle">
+<A NAME="pgfId=1052083">
+ </A>
+<A NAME="39530">
+ </A>
+DEVS models for the LQN simulation library.</H6>
+</CAPTION>
+<TR>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051985">
+ </A>
+LQN aspect or element</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051987">
+ </A>
+DEVS atomic model</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051989">
+ </A>
+DEVS coupled model</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051991">
+ </A>
+Functionality</P>
+</TH>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051993">
+ </A>
+Processor</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051995">
+ </A>
+Processor</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051997">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051999">
+ </A>
+receives call, executes it for the specified time</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052000">
+ </A>
+replies when done</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052001">
+ </A>
+calculates utilization and throughput</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052003">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052005">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052007">
+ </A>
+Processor</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052009">
+ </A>
+combines gather, queue, and atomic processor for full LQN processor functionality</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052011">
+ </A>
+Entry with phases</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052013">
+ </A>
+Entry</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052015">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052017">
+ </A>
+receives call, executes the associated workloads (phase 1 and phase 2 processing, makes calls), and replies when done</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052018">
+ </A>
+processor demands for phase 1 and phase 2 must first be initialized through the initproc port</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052019">
+ </A>
+server calls for phase 1 and phase 2 must first be initialized through the initserv port</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052021">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052023">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052025">
+ </A>
+Entry</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052027">
+ </A>
+combines gather, queue, atomic entry, and distribute for full LQN entry functionality</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052029">
+ </A>
+implied queue</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052031">
+ </A>
+Queue</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052033">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052035">
+ </A>
+adds call to queue</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052036">
+ </A>
+sends first element in queue to attached idle Processor or Entry</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052037">
+ </A>
+passes reply back up to the call source</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052039">
+ </A>
+aggregating calls from multiple sources</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052041">
+ </A>
+Gather</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052043">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052045">
+ </A>
+aggregates calls from multiple input ports and sends them out the single output port</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052046">
+ </A>
+adds a message with the input port index</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052047">
+ </A>
+passes reply from the reply port at the &quot;output end&quot; through to the appropriate response port at the &quot;input end&quot;</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052049">
+ </A>
+distributing calls to different entries</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052051">
+ </A>
+Distribute</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052053">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052055">
+ </A>
+receives calls on the single input port and distributes them to the appropriate output port</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052056">
+ </A>
+sends reply from the reply port at the &quot;output end&quot; to the single response port at the &quot;input end&quot;</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052058">
+ </A>
+Task</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052060">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052062">
+ </A>
+Task</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052064">
+ </A>
+coupled model composed of multiple entries</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052066">
+ </A>
+Disk</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052068">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052070">
+ </A>
+Processor</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1052072">
+ </A>
+reuses the functionality of a processor</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052074">
+ </A>
+Activity</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052076">
+ </A>
+not represented</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052078">
+ </A>
+not represented</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1052080">
+ </A>
+</P>
+</TD>
+</TR>
+</TABLE>
+</OL>
+</DIV>
+</DIV>
+<DIV>
+<H2 CLASS="Heading1">
+<A NAME="pgfId=1038628">
+ </A>
+<A NAME="10671">
+ </A>
+LQN Simulation Library for DEVS</H2>
+<DIV>
+<H3 CLASS="Heading2">
+<A NAME="pgfId=1046019">
+ </A>
+Design</H3>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1046327">
+ </A>
+The DEVS LQN library must represent processors, tasks, and entries with phases. Additionally, the library might also represent disks and activities. The DEVS simulation should provide results for:</LI>
+<LI CLASS="Bulleted">
+<A NAME="pgfId=1046356">
+ </A>
+entry average service time, throughput, and utilization</LI>
+<LI CLASS="Bulleted">
+<A NAME="pgfId=1046360">
+ </A>
+phase average service time</LI>
+<LI CLASS="Bulleted">
+<A NAME="pgfId=1046361">
+ </A>
+processor throughput and utilization</LI>
+<LI CLASS="Bulleted">
+<A NAME="pgfId=1046372">
+ </A>
+queue average waiting time, average queue length (this is not provided in the existing LQN solver and simulator and although it can be calculated, it would be desirable to provide it outright)</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1046416">
+ </A>
+The main design issue for the DEVS LQN simulation library was to decide which LQN elements or artifacts to model as DEVS atomic models and which ones to model as DEVS coupled models. Processors, tasks, and entries with phases definitely needed to be included in the library. Activities were initially left out since they are optional in the LQN notation.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1046438">
+ </A>
+LQN elements have queues that are implicitly supported by LQNS and LQSim. FIFO queues were incorporated explicitly into the DEVS LQN library. Since queues behave the same way for software or hardware elements, a decision was made to implement a universal queue as a separate atomic model to be coupled with the processor or entry atomic models.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1051772">
+ </A>
+LQN calls are made using entry names to identify the call target. Therefore a mechanism was needed to deal with addressing the calls in DEVS. The solution was to implement a DEVS version of a multiplexer and demultiplexer to either gather calls into a given queue (either for an entry or a processor) or to distribute calls from an entry to other entries.    </LI>
+</OL>
+<DIV>
+<MAP NAME="devslqn-2">
+</MAP>
+<IMG SRC="devslqn-2.gif" USEMAP="#devslqn-2">
+</DIV>
+<DIV>
+<MAP NAME="devslqn-3">
+</MAP>
+<IMG SRC="devslqn-3.gif" USEMAP="#devslqn-3">
+</DIV>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1051889">
+ </A>
+<A HREF="devslqn.html#39530" CLASS="XRef">
+See DEVS models for the LQN simulation library.</A>
+ lists the different DEVS models for LQN elements, while <A HREF="devslqn.html#34204" CLASS="XRef">
+See FSMs for the DEVS queue and processor atomic models.</A>
+ and <A HREF="devslqn.html#14582" CLASS="XRef">
+See FSM for the DEVS entry atomic model.</A>
+ show FSMs for the behaviour of the Queue, Processor, and Entry atomic models. The Gather and Distribute models have non-blocking, single-state FSMs that instantly pass messages through and route them to the correct ports. </LI>
+</OL>
+<DIV>
+<MAP NAME="devslqn-4">
+</MAP>
+<IMG SRC="devslqn-4.gif" USEMAP="#devslqn-4">
+</DIV>
+</DIV>
+<DIV>
+<H3 CLASS="Heading2">
+<A NAME="pgfId=1051912">
+ </A>
+DEVS Coupled Model Structure</H3>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1052125">
+ </A>
+<A HREF="devslqn.html#21757" CLASS="XRef">
+See ROOM structure for the LQN processor and LQN entry DEVS coupled models.</A>
+ shows the structure, using ROOM <A HREF="devslqn.html#12004" CLASS="XRef">
+See B. Selic, G. Gullekson, P.T. Ward, &quot;Real-Time Object-Oriented Modeling&quot;, John Wiley &amp; Sons, New York, 1994</A>
+ actor notation, of the DEVS coupled models for LQN Processors and Entries incorporating queues and message routing multiplexers/demultiplexers. The in ports of the Processor and Entry atomic models are connected to the out ports of their dedicated Queue atomic models. The in port of the Queue is connected to the output port of the Gather multiplexer model. For entries, the servcall output port is connected to the in port of the Distribute demultiplexer which sends it on the appropriate out port for the intended call target. The same sort of connections are repeated for the reply ports but with the reply messages going in the opposite direction. It is these coupled models that fully represent the LQN processors and entries.</LI>
+</OL>
+<DIV>
+<H4 CLASS="Heading3">
+<A NAME="pgfId=1052148">
+ </A>
+Structural Limitations</H4>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1052165">
+ </A>
+The coupled Entry and Processor models are the building blocks that can be composed into layered models. The only limit on the LQN models that can be built is the limit of ten input ports into the Gather multiplexers and ten output ports out of the Distribute demultiplexers. Therefore, coupled Processor models can have a maximum of ten different entries running on them and coupled Entry models are limited to a maximum of ten different clients and can only call a maximum of ten other servers. This physical limitation can easily be overcome by implementing Gather and Distribute models with more ports if that becomes desirable.</LI>
+</OL>
+</DIV>
+</DIV>
+<DIV>
+<H3 CLASS="Heading2">
+<A NAME="pgfId=1051481">
+ </A>
+Messaging</H3>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1051482">
+ </A>
+LQN messages can be thought of as having a source field denoting the entity making the call, a destination or target field denoting the entry for which the call is destined, and a demand field denoting the workload associated with the call. Simple DEVS messages have only a single variable field per message, therefore making it necessary to send and receive sets of two or three messages in order to transmit all of the required fields. <A HREF="devslqn.html#25157" CLASS="XRef">
+See DEVS LQN simulation library messages.</A>
+ lists the messages sent between atomic models in the DEVS LQN simulation library, how they are ordered, and how they should be interpreted.    </LI>
+<TABLE BORDER="1">
+<CAPTION>
+<H6 CLASS="TableTitle">
+<A NAME="pgfId=1051734">
+ </A>
+<A NAME="25157">
+ </A>
+DEVS LQN simulation library messages.</H6>
+</CAPTION>
+<TR>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051491">
+ </A>
+Sender (port)</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051493">
+ </A>
+Receiver (port)</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051495">
+ </A>
+LQN Equivalent Message</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051497">
+ </A>
+DEVS Messages (in order)</P>
+</TH>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">
+<A NAME="pgfId=1051499">
+ </A>
+Interpretation</P>
+</TH>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051501">
+ </A>
+Processor (reply)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051503">
+ </A>
+Queue (response)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051505">
+ </A>
+done</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051507">
+ </A>
+reply</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051509">
+ </A>
+notify the source entry that the processing is done, the message value represents the actual processing time in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051511">
+ </A>
+Processor (ready)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051513">
+ </A>
+Queue (ready)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051515">
+ </A>
+done</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051517">
+ </A>
+ready</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051519">
+ </A>
+ready for another job, the message value is irrelevant</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051521">
+ </A>
+Processor (throughput)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051523">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051525">
+ </A>
+throughput</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051527">
+ </A>
+throughput</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051529">
+ </A>
+the message value represents the processor throughput in number of jobs per ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051531">
+ </A>
+Processor (utilization)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051533">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051535">
+ </A>
+utilization</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051537">
+ </A>
+utilization</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051539">
+ </A>
+the message value represents the fraction/percentage of time that the processor has been busy</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051541">
+ </A>
+Entry (proccall)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051543">
+ </A>
+Distribute (in[0...9])</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051545">
+ </A>
+processor call</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051547">
+ </A>
+processor service demand</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051549">
+ </A>
+the message value represents the processor demand in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051551">
+ </A>
+Entry (servcall)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051553">
+ </A>
+Gather (in)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051555">
+ </A>
+service call</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051557">
+ </A>
+service call</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051559">
+ </A>
+the message value represents the index of the target server</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051561">
+ </A>
+Entry (avservtime)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051563">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051565">
+ </A>
+average entry service time</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051567">
+ </A>
+average entry service time</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051569">
+ </A>
+the message value represents the average entry service time in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051571">
+ </A>
+Entry (avph1time)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051573">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051575">
+ </A>
+average phase1 service time</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051577">
+ </A>
+average phase 1 service time</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051579">
+ </A>
+the message value represents the average phase 1 service time in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051581">
+ </A>
+Entry (avph2time)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051583">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051585">
+ </A>
+average phase2 service time</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051587">
+ </A>
+average phase 2 service time</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051589">
+ </A>
+the message value represents the average phase 2 service time in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051591">
+ </A>
+Entry (throughput)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051593">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051595">
+ </A>
+throughput</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051597">
+ </A>
+throughput</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051599">
+ </A>
+the message value represents the entry throughput in number of jobs per ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051601">
+ </A>
+Entry (utilization)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051603">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051605">
+ </A>
+utilization</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051607">
+ </A>
+utilization</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051609">
+ </A>
+the message value represents the fraction/percentage of time that the entry has been busy</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051611">
+ </A>
+Queue (out)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051613">
+ </A>
+Processor (in)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051615">
+ </A>
+processor call</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051617">
+ </A>
+processor service demand</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051619">
+ </A>
+the message value represents the service demand in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051621">
+ </A>
+Queue (out)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051623">
+ </A>
+Entry (in)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051625">
+ </A>
+service call</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051627">
+ </A>
+service call</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051629">
+ </A>
+service call, the message value is irrelevant</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051631">
+ </A>
+Queue (reply)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051633">
+ </A>
+Gather (response)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051635">
+ </A>
+reply</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051637">
+ </A>
+reply</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051639">
+ </A>
+the message value represents the index of the source that must be replied to</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051641">
+ </A>
+Queue (averagesize)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051643">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051645">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051647">
+ </A>
+average queue size</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051649">
+ </A>
+the message value represents the average number of elements in the queue at the time the message was sent</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051651">
+ </A>
+Queue (averagewait)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051653">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051655">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051657">
+ </A>
+average queueing wait</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051659">
+ </A>
+the message value represents the average number of milliseconds a message spent in the queue at the time the message was sent</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051661">
+ </A>
+Gather (out)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051663">
+ </A>
+Queue (in)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051665">
+ </A>
+service call</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051667">
+ </A>
+source of service call</LI>
+</UL>
+<P CLASS="CellBody">
+<A NAME="pgfId=1051668">
+ </A>
+</P>
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051669">
+ </A>
+service call demand</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051671">
+ </A>
+the message value represents the index of the call source</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051672">
+ </A>
+if attached to a processor then the message value represents the processor service demand in ms, otherwise the message is irrelevant</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051674">
+ </A>
+Gather (reply[0...9])</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051676">
+ </A>
+Distribute (resp[0...9])</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051678">
+ </A>
+reply</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051680">
+ </A>
+reply</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051682">
+ </A>
+reply, the message value is irrelevant</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051684">
+ </A>
+Distribute (out[0...9])</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051686">
+ </A>
+Gather (in[0...9])</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051688">
+ </A>
+service call</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051690">
+ </A>
+service call</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051692">
+ </A>
+service call, if attached to a processor then the message value represents the processor service demand in ms, otherwise the message value is irrelevant</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051694">
+ </A>
+Distribute (reply)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051696">
+ </A>
+Entry (response)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051698">
+ </A>
+reply</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051700">
+ </A>
+reply</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051702">
+ </A>
+reply, the message value represents the index of the call target returning the reply</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051704">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051706">
+ </A>
+Entry (initproc)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051708">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051710">
+ </A>
+phase number</LI>
+</UL>
+<P CLASS="CellBody">
+<A NAME="pgfId=1051711">
+ </A>
+</P>
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051712">
+ </A>
+processor demand</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051714">
+ </A>
+the message value represents the phase number to initialize</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051715">
+ </A>
+the message value represents the processor demand in ms</LI>
+</UL>
+</TD>
+</TR>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051717">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051719">
+ </A>
+Entry (initserv)</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">
+<A NAME="pgfId=1051721">
+ </A>
+</P>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051723">
+ </A>
+phase number</LI>
+</UL>
+<P CLASS="CellBody">
+<A NAME="pgfId=1051724">
+ </A>
+</P>
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051725">
+ </A>
+calls</LI>
+</UL>
+<P CLASS="CellBody">
+<A NAME="pgfId=1051726">
+ </A>
+</P>
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051727">
+ </A>
+call target</LI>
+</UL>
+</TD>
+<TD ROWSPAN="1" COLSPAN="1">
+<UL>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051729">
+ </A>
+the message value represents the phase number to initialize</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051730">
+ </A>
+the message value represents the number of calls to make to the target server</LI>
+<LI CLASS="CellBulleted">
+<A NAME="pgfId=1051731">
+ </A>
+the message value represents the index of the target server</LI>
+</UL>
+</TD>
+</TR>
+</TABLE>
+</OL>
+</DIV>
+<DIV>
+<H3 CLASS="Heading2">
+<A NAME="pgfId=1052190">
+ </A>
+DEVS LQN Limitations</H3>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1052191">
+ </A>
+DEVS LQN Tasks are formed by aggregating, but not interconnecting, coupled Entry models. Using the current implementation, the resulting tasks end up having individual queues for each entry. This differs from the queueing model in single-threaded LQN tasks where the tasks has a single queue shared by all its entries. However, this is not an issue for single-entry tasks or for tasks with the same number of threads as entries. The solution to this potential problem is to add a Distribute layer between the atomic Queue and atomic Entry models such that a single queue is shared among the multiple entries in a task. Implementing this also requires refining the messages to have two target fields - one for the target task and another one for the target entry in that task.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1052206">
+ </A>
+The DEVS environment does not provide any finer time granularity than milliseconds. This is a limitation for evaluating systems that require more precise time scales. A possible solution would be to reconfigure the DEVS environment so that time is counted in unitless &quot;ticks&quot; that can be interpreted to have whatever precision a user desires. This is the approach currently used in the LQSim simulator.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1052219">
+ </A>
+Another limitation of the current implementation of DEVS LQN is that the random number generating routines in randlib.c (Cygwinl) do not generate truly random numbers since the generator is seeded with the same number and the random numbers generated are the same from run to run. As well, the genexp method provided with the DEVS package generates exponentially distributed numbers with an ever increasing mean, as was observed over long runs. Both of these issues should be easy to address by incorporating better mathematical libraries in the code.</LI>
+</OL>
+</DIV>
+</DIV>
+<DIV>
+<H2 CLASS="Heading1">
+<A NAME="pgfId=1052202">
+ </A>
+<A NAME="20516">
+ </A>
+Conclusions</H2>
+<OL>
+<LI CLASS="Body">
+<A NAME="pgfId=1049277">
+ </A>
+The DEVS LQN simulation library provides a starting point for creating simple LQN performance models in the DEVS environment. It makes a contribution to the LQN modeling paradigm by extending it to a simulation platform that supports interactions between different models and different simulation platforms, something that the existing LQNS and LQSim solvers cannot do.</LI>
+<LI CLASS="Body">
+<A NAME="pgfId=1052253">
+ </A>
+The current implementation exhibits some weaknesses in the generation of random numbers, the fixed simulation timescale, and by allowing entries to have individual queues. Additional work should also be undertaken to add support for asynchronous and forwarding calls to the library - the current version only uses synchronous calls. Eventually the library should also include support for LQN activities.</LI>
+</OL>
+</DIV>
+<DIV>
+<H2 CLASS="HeadingRunIn">
+<A NAME="pgfId=1049376">
+ </A>
+References</H2>
+<OL>
+<LI CLASS="ref">
+<A NAME="pgfId=1049396">
+ </A>
+<A NAME="32721">
+ </A>
+Greg Franks, &quot;Performance Analysis of Distributed Server Systems&quot;, Report OCIEE-00-01, Ph.D. thesis, Carleton University, Ottawa, Jan. 2000</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049408">
+ </A>
+<A NAME="26381">
+ </A>
+E. Mascarenhas, &quot;A System for Multithreaded Parallel Simulation and Computation with Migrant Threads and Objects&quot;, Ph.D. Thesis, Department of Computer Sciences, Purdue University, West Lafayette, USA, 1996</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049413">
+ </A>
+<A NAME="27698">
+ </A>
+E. Mascarenhas, F. Knop, and V. Rego, &quot;ParaSol: A Multithreaded System for Parallel Simulation Based on Mobile Threads&quot;, Winter Simulation Conference, 1995</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049418">
+ </A>
+<A NAME="40149">
+ </A>
+J.E. Neilson, C.M. Woodside, D.C. Petriu and S. Majumdar, &quot;Software Bottlenecking in Client-Server Systems and Rendez-vous Networks&quot;, IEEE Trans. On Software Engineering, Vol. 21, No. 9, pp. 776-782, September 1995</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049444">
+ </A>
+<A NAME="34848">
+ </A>
+J. A. Rolia, K. C. Sevcik, &quot;The Method of Layers&quot;, IEEE Transactions on Software Engineering, Vol. 21, No. 8, 1995, pp. 682-688</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1050601">
+ </A>
+<A NAME="12004">
+ </A>
+B. Selic, G. Gullekson, P.T. Ward, &quot;Real-Time Object-Oriented Modeling&quot;, John Wiley &amp; Sons, New York, 1994</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049464">
+ </A>
+<A NAME="33304">
+ </A>
+C. M. Woodside, &quot;Throughput Calculation for Basic Stochastic Rendezvous Networks&quot;, Performance Evaluation, Vol. 9, No. 2, Apr 1988, pp. 143-160</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049473">
+ </A>
+<A NAME="26606">
+ </A>
+C. M. Woodside, J. E. Neilson, D. C. Petriu and S. Majumdar, &quot;The Stochastic Rendezvous Network Model for Performance of Synchronous Client-Server-Like Distributed Software&quot;, IEEE Transactions on Computers, Vol. 44, No. 1, Jan 1995, pp. 20-34</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049465">
+ </A>
+<A NAME="30683">
+ </A>
+C. M. Woodside, S. Majumdar, J. E. Neilson, D. C. Petriu, J. A. Rolia, A. Hubbard and R. B. Franks, &quot;A Guide to Performance Modeling of Distributed Client-Server Software Systems with Layered Queueing Networks&quot;, Department of Systems and Computer Engineering, Carleton University, Ottawa, Canada, Nov 1995</LI>
+<LI CLASS="ref">
+<A NAME="pgfId=1049774">
+ </A>
+<A NAME="30029">
+ </A>
+Woodside C.M. (2002) Tutorial Introduction to Layered Performance Modeling of Software Performance. http://www.sce.carleton.ca/rads/lqn/lqn-documentation/tutorialf.pdf, May 2002.</LI>
+</OL>
+</DIV>
+</BODY>
+</HTML>
